@@ -1119,9 +1119,6 @@ public class Game extends JFrame {
 
     public void startMovingGhosts() {
         for (int i = 0; i < ghostNum; i++) {
-            Semaphore semaphore = new Semaphore(1);
-            ghostSemaphores[i] = semaphore;
-
             Thread ghostThread = new Thread(() -> {
                 int ghostX = levelData[0].length / 2;
                 int ghostY = levelData.length / 2;
@@ -1132,11 +1129,9 @@ public class Game extends JFrame {
                         int ghostXLast = ghostX;
                         int ghostYLast = ghostY;
 
-                        semaphore.acquire();
                         int[] newGhostPosition = moveGhost(ghostX, ghostY);
                         ghostX = newGhostPosition[0];
                         ghostY = newGhostPosition[1];
-                        semaphore.release();
 
                         Thread.sleep(ghostSpeed);
 
