@@ -979,9 +979,11 @@ public class Game extends JFrame {
                 try {
                     table.repaint();
                     table.revalidate();
+
                     semaphore.acquire();
                     movePacman(currentKeyCode);
                     semaphore.release();
+
                     Thread.sleep(pacmanSpeed);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
