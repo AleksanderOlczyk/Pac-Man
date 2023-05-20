@@ -95,7 +95,7 @@ public class Game extends JFrame {
         this.pacmanSpeed = 300;
         this.ghostSpeed = 300;
         this.score = 0;
-        this.level = 0;
+        this.level = 1;
         this.lifes = 3;
         this.pointsMultiplier = 1;
         this.levelData = genMap(preGenMap());
@@ -297,7 +297,7 @@ public class Game extends JFrame {
     }
 
     public void nextLevel() {
-        System.out.println("Next Level " + level);
+        System.out.println("Next Level " + ++level);
         System.out.println("Score: " + score);
         for (int row = 0; row < levelData.length; row++) {
             System.arraycopy(levelDataBackUp[row], 0, levelData[row], 0, levelData[row].length);
@@ -328,6 +328,7 @@ public class Game extends JFrame {
 
         bonusPoints += 100;
 
+        stopMovingGhosts();
         this.ghostSemaphores  = new Semaphore[ghostNum];
         this.ghostThreads = new Thread[ghostNum];
         ghostsUpdate();
@@ -546,7 +547,7 @@ public class Game extends JFrame {
     private class MapTableCellRenderer extends DefaultTableCellRenderer {
 
         //misc
-        private ImageIcon scaledPointIcon, scaledPacmanRespIcon, scaledGhostRespIcon;
+        private ImageIcon scaledPointIcon, scaledPointIcon1, scaledPacmanRespIcon, scaledGhostRespIcon;
 
         //pacman
         private ImageIcon scaledUpIcon, scaledUpIcon1, scaledUpIcon2, scaledUpIcon3;
@@ -555,6 +556,9 @@ public class Game extends JFrame {
         private ImageIcon scaledRightIcon, scaledRightIcon1, scaledRightIcon2, scaledRightIcon3;
 
         //ghost
+        private ImageIcon scaledGhostUp, scaledGhostUp1;
+        private ImageIcon scaledGhostDown, scaledGhostDown1;
+        private ImageIcon scaledGhostLeft, scaledGhostLeft1;
         private ImageIcon scaledGhostRight, scaledGhostRight1;
 
         //perks
@@ -562,13 +566,18 @@ public class Game extends JFrame {
 
         public MapTableCellRenderer() {
             Dimension cellSize = table.getCellRect(pacmanY, pacmanX, false).getSize();
+
+            //misc
             scaledPointIcon = scaleImage(point.getImage(), cellSize.width / 2, cellSize.height / 2);
+            scaledPointIcon1 = scaleImage(point.getImage(), cellSize.width / 2, cellSize.height / 2);
             scaledPacmanRespIcon = scaleImage(pacmanResp.getImage(), cellSize.width / 2, cellSize.height / 2);
             scaledGhostRespIcon = scaleImage(ghostResp.getImage(), cellSize.width / 2, cellSize.height / 2);
 
+            //ghost
             scaledGhostRight = scaleImage(ghostRight.getImage(), cellSize.width / 2, cellSize.height / 2);
             scaledGhostRight1 = scaleImage(ghostRight1.getImage(), cellSize.width / 2, cellSize.height / 2);
 
+            //pacman
             scaledUpIcon = scaleImage(up.getImage(), cellSize.width / 2, cellSize.height / 2);
             scaledUpIcon1 = scaleImage(up1.getImage(), cellSize.width / 2, cellSize.height / 2);
             scaledUpIcon2 = scaleImage(up2.getImage(), cellSize.width / 2, cellSize.height / 2);
@@ -589,14 +598,12 @@ public class Game extends JFrame {
             scaledRightIcon2 = scaleImage(right2.getImage(), cellSize.width / 2, cellSize.height / 2);
             scaledRightIcon3 = scaleImage(right3.getImage(), cellSize.width / 2, cellSize.height / 2);
 
+            //perks
             scaledBonusIcon = scaleImage(bonus.getImage(), cellSize.width / 2, cellSize.height / 2);
             scaledMultiplierIcon = scaleImage(multiplier.getImage(), cellSize.width / 2, cellSize.height / 2);
             scaledHeartIcon = scaleImage(heart.getImage(), cellSize.width / 2, cellSize.height / 2);
             scaledSlowdownIcon = scaleImage(slowdown.getImage(), cellSize.width / 2, cellSize.height / 2);
             scaledFreezeIcon = scaleImage(freeze.getImage(), cellSize.width / 2, cellSize.height / 2);
-
-            table.repaint();
-            table.revalidate();
         }
 
         @Override
@@ -615,7 +622,7 @@ public class Game extends JFrame {
                     ((JLabel)c).setIcon(null);
                     break;
                 case 2:
-                    ((JLabel)c).setIcon(scaledPointIcon);
+                    ((JLabel)c).setIcon(getScaledPointIcon());
                     ((JLabel)c).setHorizontalAlignment(JLabel.CENTER);
                     break;
                 case 4:
@@ -638,7 +645,7 @@ public class Game extends JFrame {
                     break;
                 case 32, 34, 36, 38, 40, 48, 66, 72, 104, 136, 168, 200, 232, 264, 296, 328,
                     96, 160, 288, 544, 1056:
-                    ((JLabel)c).setIcon(getGhostIcon());
+                    ((JLabel)c).setIcon(getGhostRightIcon());
                     ((JLabel)c).setHorizontalAlignment(JLabel.CENTER);
                     break;
                 case 64:
@@ -714,8 +721,23 @@ public class Game extends JFrame {
             };
         }
 
-        private ImageIcon getGhostIcon() {
+        private ImageIcon getGhostUpIcon() {
             return ghostAnimationState == 0 ? scaledGhostRight : scaledGhostRight1;
+        }
+
+        private ImageIcon getGhostDownIcon() {
+            return ghostAnimationState == 0 ? scaledGhostRight : scaledGhostRight1;
+        }
+
+        private ImageIcon getGhostLeftIcon() {
+            return ghostAnimationState == 0 ? scaledGhostRight : scaledGhostRight1;
+        }
+        private ImageIcon getGhostRightIcon() {
+            return ghostAnimationState == 0 ? scaledGhostRight : scaledGhostRight1;
+        }
+
+        private ImageIcon getScaledPointIcon() {
+            return pointAnimationState == 0 ? scaledPointIcon : scaledPointIcon1;
         }
     }
 
@@ -1022,7 +1044,9 @@ public class Game extends JFrame {
 
             switch (mGhost) {
                 case 0:
-                    if (levelData[ghostY][ghostX] > 32 && levelData[ghostY][ghostX] < 74)
+                    if ((levelData[ghostY][ghostX] > 32 && levelData[ghostY][ghostX] < 74)
+                        || levelData[ghostY][ghostX] == 64 || levelData[ghostY][ghostX] == 128
+                        || levelData[ghostY][ghostX] == 256 || levelData[ghostY][ghostX] == 512 || levelData[ghostY][ghostX] == 1024)
                         levelData[ghostY][ghostX] -= 32;
                     if (levelData[ghostY][ghostX] == 32)
                         levelData[ghostY][ghostX] = 0;
@@ -1036,7 +1060,9 @@ public class Game extends JFrame {
                         levelData[ghostY][ghostX] += 32;
                     break;
                 case 1:
-                    if (levelData[ghostY][ghostX] > 32 && levelData[ghostY][ghostX] < 64)
+                    if ((levelData[ghostY][ghostX] > 32 && levelData[ghostY][ghostX] < 74)
+                            || levelData[ghostY][ghostX] == 64 || levelData[ghostY][ghostX] == 128
+                            || levelData[ghostY][ghostX] == 256 || levelData[ghostY][ghostX] == 512 || levelData[ghostY][ghostX] == 1024)
                         levelData[ghostY][ghostX] -= 32;
                     if (levelData[ghostY][ghostX] == 32)
                         levelData[ghostY][ghostX] = 0;
@@ -1051,7 +1077,9 @@ public class Game extends JFrame {
                         levelData[ghostY][ghostX] += 32;
                     break;
                 case 2:
-                    if (levelData[ghostY][ghostX] > 32 && levelData[ghostY][ghostX] < 64)
+                    if ((levelData[ghostY][ghostX] > 32 && levelData[ghostY][ghostX] < 74)
+                            || levelData[ghostY][ghostX] == 64 || levelData[ghostY][ghostX] == 128
+                            || levelData[ghostY][ghostX] == 256 || levelData[ghostY][ghostX] == 512 || levelData[ghostY][ghostX] == 1024)
                         levelData[ghostY][ghostX] -= 32;
                     if (levelData[ghostY][ghostX] == 32)
                         levelData[ghostY][ghostX] = 0;
@@ -1066,7 +1094,9 @@ public class Game extends JFrame {
                         levelData[ghostY][ghostX] += 32;
                     break;
                 case 3:
-                    if (levelData[ghostY][ghostX] > 32 && levelData[ghostY][ghostX] < 64)
+                    if ((levelData[ghostY][ghostX] > 32 && levelData[ghostY][ghostX] < 74)
+                            || levelData[ghostY][ghostX] == 64 || levelData[ghostY][ghostX] == 128
+                            || levelData[ghostY][ghostX] == 256 || levelData[ghostY][ghostX] == 512 || levelData[ghostY][ghostX] == 1024)
                         levelData[ghostY][ghostX] -= 32;
                     if (levelData[ghostY][ghostX] == 32)
                         levelData[ghostY][ghostX] = 0;
@@ -1177,5 +1207,27 @@ public class Game extends JFrame {
             }
         });
         ghostAnim.start();
+    }
+
+    private int pointAnimationState = 0;
+    private void updatePointAnimationState() {
+        pointAnimationState = (pointAnimationState + 1) % 2;
+    }
+    private void updatePointAnimation() {
+        Thread pointAnim = new Thread(() -> {
+            while (true) {
+                try {
+                    Thread.sleep(1000/5);
+                    updatePointAnimationState();
+                    SwingUtilities.invokeLater(() -> {
+                        table.repaint();
+                        table.revalidate();
+                    });
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        pointAnim.start();
     }
 }
