@@ -55,7 +55,7 @@ public class Game extends JFrame {
     private ImageIcon ghostResp, pacmanResp;
     private ImageIcon ghostRight, ghostRight1;
     private ImageIcon up, up1, up2, up3, down, down1, down2, down3, left, left1, left2, left3 , right, right1, right2, right3;
-    private ImageIcon life, scaledLife, point;
+    private ImageIcon life, scaledLife, point, point1;
     private ImageIcon bonus, heart, multiplier, freeze, slowdown;
 
     public Game(int mapHeight, int mapWidth) {
@@ -166,17 +166,15 @@ public class Game extends JFrame {
         add(tablePanel, BorderLayout.CENTER);
         add(livesAndScorePanel, BorderLayout.SOUTH);
 
+        updatePacmanAnimation();
+        updateGhostAnimation();
+//        updatePointAnimation();
+
         setVisible(true);
         startTimer(timerLabel);
         startMovingGhosts();
-        updatePacmanAnimation();
-        updateGhostAnimation();
 
-        for (int j = 0; j < table.getColumnCount(); j++) {
-            TableColumn tableColumn = table.getColumnModel().getColumn(j);
-            MapTableCellRenderer cellRenderer = new MapTableCellRenderer();
-            tableColumn.setCellRenderer(cellRenderer);
-        }
+        refreshTable();
     }
 
     public void doublePoints() {
@@ -241,7 +239,8 @@ public class Game extends JFrame {
 
     private void loadImages() {
         //misc
-        point = new ImageIcon("assets\\images\\point.png");
+        point = new ImageIcon("assets\\images\\point\\point.png");
+        point1 = new ImageIcon("assets\\images\\point\\point1.png");
         pacmanResp = new ImageIcon("assets\\images\\pacman\\resp.png");
         ghostResp = new ImageIcon("assets\\images\\ghost\\resp.png");
 
@@ -279,6 +278,14 @@ public class Game extends JFrame {
         heart = new ImageIcon("assets\\images\\perks\\heart.png");
         slowdown = new ImageIcon("assets\\images\\perks\\slowdown.png");
         freeze = new ImageIcon("assets\\images\\perks\\freeze.png");
+    }
+
+    public void refreshTable() {
+        for (int j = 0; j < table.getColumnCount(); j++) {
+            TableColumn tableColumn = table.getColumnModel().getColumn(j);
+            MapTableCellRenderer cellRenderer = new MapTableCellRenderer();
+            tableColumn.setCellRenderer(cellRenderer);
+        }
     }
 
     public boolean checkLevel() {
@@ -479,20 +486,20 @@ public class Game extends JFrame {
             this.ghostNum = 6;
             this.bonusPoints = 1000;
         }
-        System.out.println("Ghost num " + ghostNum);
+        System.out.println("(loadGhost()) Ghost num " + ghostNum);
     }
 
     public void pacmanDead() {
         lifes--;
         loadLifes();
-        if (lifes <= 0) {
+        if (lifes == 0) {
             new SaveScore(this);
             removeKeyListener(keyListener);
             stopMovingGhosts();
             stopMovingPacman();
         }
 
-        levelData[pacmanY][pacmanX] = levelData[pacmanY][pacmanX] == 48 ? 32 : 0;
+        levelData[pacmanY][pacmanX] -= 16;
         pacmanX = pacmanXBackUp;
         pacmanY = pacmanYBackUp;
         levelData[pacmanY][pacmanX] += 16;
@@ -569,7 +576,7 @@ public class Game extends JFrame {
 
             //misc
             scaledPointIcon = scaleImage(point.getImage(), cellSize.width / 2, cellSize.height / 2);
-            scaledPointIcon1 = scaleImage(point.getImage(), cellSize.width / 2, cellSize.height / 2);
+            scaledPointIcon1 = scaleImage(point1.getImage(), cellSize.width / 2, cellSize.height / 2);
             scaledPacmanRespIcon = scaleImage(pacmanResp.getImage(), cellSize.width / 2, cellSize.height / 2);
             scaledGhostRespIcon = scaleImage(ghostResp.getImage(), cellSize.width / 2, cellSize.height / 2);
 
@@ -865,7 +872,7 @@ public class Game extends JFrame {
                     }
                     if (levelData[pacmanY][pacmanX] == 4 || levelData[pacmanY][pacmanX] == 8 || levelData[pacmanY][pacmanX] == 0)
                         levelData[pacmanY][pacmanX] += 16;
-                    moveP(pacmanY, pacmanX, Direction.UP);
+                    setPacmanDirection(pacmanY, pacmanX, Direction.UP);
                 }
                 break;
             case KeyEvent.VK_DOWN, KeyEvent.VK_S:
@@ -902,7 +909,7 @@ public class Game extends JFrame {
                     }
                     if (levelData[pacmanY][pacmanX] == 4 || levelData[pacmanY][pacmanX] == 8 || levelData[pacmanY][pacmanX] == 0)
                         levelData[pacmanY][pacmanX] += 16;
-                    moveP(pacmanY, pacmanX, Direction.DOWN);
+                    setPacmanDirection(pacmanY, pacmanX, Direction.DOWN);
                 }
                 break;
             case KeyEvent.VK_LEFT, KeyEvent.VK_A:
@@ -939,7 +946,7 @@ public class Game extends JFrame {
                     }
                     if (levelData[pacmanY][pacmanX] == 4 || levelData[pacmanY][pacmanX] == 8 || levelData[pacmanY][pacmanX] == 0)
                         levelData[pacmanY][pacmanX] += 16;
-                    moveP(pacmanY, pacmanX, Direction.LEFT);
+                    setPacmanDirection(pacmanY, pacmanX, Direction.LEFT);
                 }
                 break;
             case KeyEvent.VK_RIGHT, KeyEvent.VK_D:
@@ -976,13 +983,13 @@ public class Game extends JFrame {
                     }
                     if (levelData[pacmanY][pacmanX] == 4 || levelData[pacmanY][pacmanX] == 8 || levelData[pacmanY][pacmanX] == 0)
                         levelData[pacmanY][pacmanX] += 16;
-                    moveP(pacmanY, pacmanX, Direction.RIGHT);
+                    setPacmanDirection(pacmanY, pacmanX, Direction.RIGHT);
                 }
                 break;
         }
     }
 
-    public void moveP(int row, int column, Direction direction) {
+    public void setPacmanDirection(int row, int column, Direction direction) {
         if (row >= 0 && row < table.getRowCount() && column >= 0 && column < table.getColumnCount()) {
             TableColumn tableColumn = table.getColumnModel().getColumn(column);
             MapTableCellRenderer cellRenderer = new MapTableCellRenderer();
@@ -1024,16 +1031,24 @@ public class Game extends JFrame {
     public int[] moveGhost(int ghostX, int ghostY) {
         List<Integer> possibleDirections = new ArrayList<>();
 
-        if (ghostY - 1 >= 0 && levelData[ghostY - 1][ghostX] != 1 && levelData[ghostY - 1][ghostX] < 32) {
+        if ((ghostY - 1 >= 0 && levelData[ghostY - 1][ghostX] != 1) && (levelData[ghostY - 1][ghostX] < 32
+                || levelData[ghostY - 1][ghostX] == 64 || levelData[ghostY - 1][ghostX] == 128
+                || levelData[ghostY - 1][ghostX] == 256 || levelData[ghostY - 1][ghostX] == 512 || levelData[ghostY - 1][ghostX] == 1024)) {
             possibleDirections.add(0);
         }
-        if (ghostY + 1 < levelData.length && levelData[ghostY + 1][ghostX] != 1 && levelData[ghostY + 1][ghostX] < 32) {
+        if ((ghostY + 1 < levelData.length && levelData[ghostY + 1][ghostX] != 1) && (levelData[ghostY + 1][ghostX] < 32
+                || levelData[ghostY + 1][ghostX] == 64 || levelData[ghostY + 1][ghostX] == 128
+                || levelData[ghostY + 1][ghostX] == 256 || levelData[ghostY + 1][ghostX] == 512 || levelData[ghostY + 1][ghostX] == 1024)) {
             possibleDirections.add(1);
         }
-        if (ghostX - 1 >= 0 && levelData[ghostY][ghostX - 1] != 1 && levelData[ghostY][ghostX - 1] < 32) {
+        if ((ghostX - 1 >= 0 && levelData[ghostY][ghostX - 1] != 1) && (levelData[ghostY][ghostX - 1] < 32
+                || levelData[ghostY][ghostX - 1] == 64 || levelData[ghostY][ghostX - 1] == 128
+                || levelData[ghostY][ghostX - 1] == 256 || levelData[ghostY][ghostX - 1] == 512 || levelData[ghostY][ghostX - 1] == 1024)) {
             possibleDirections.add(2);
         }
-        if (ghostX + 1 < levelData[ghostY].length && levelData[ghostY][ghostX + 1] != 1 && levelData[ghostY][ghostX + 1] < 32) {
+        if ((ghostX + 1 < levelData[0].length && levelData[ghostY][ghostX + 1] != 1) && (levelData[ghostY][ghostX + 1] < 32
+                || levelData[ghostY][ghostX + 1] == 64 || levelData[ghostY][ghostX + 1] == 128
+                || levelData[ghostY][ghostX + 1] == 256 || levelData[ghostY][ghostX + 1] == 512 || levelData[ghostY][ghostX + 1] == 1024)) {
             possibleDirections.add(3);
         }
 
@@ -1044,71 +1059,32 @@ public class Game extends JFrame {
 
             switch (mGhost) {
                 case 0:
-                    if ((levelData[ghostY][ghostX] > 32 && levelData[ghostY][ghostX] < 74)
-                        || levelData[ghostY][ghostX] == 64 || levelData[ghostY][ghostX] == 128
-                        || levelData[ghostY][ghostX] == 256 || levelData[ghostY][ghostX] == 512 || levelData[ghostY][ghostX] == 1024)
-                        levelData[ghostY][ghostX] -= 32;
-                    if (levelData[ghostY][ghostX] == 32)
-                        levelData[ghostY][ghostX] = 0;
+                    levelData[ghostY][ghostX] -= 32;
                     ghostY--;
-                    if (levelData[ghostY][ghostX] == 16 || levelData[ghostY][ghostX] == 18 || levelData[ghostY][ghostX] == 20 || levelData[ghostY][ghostX] == 24) {
+                    if (levelData[ghostY][ghostX] == 16 || levelData[ghostY][ghostX] == 18 || levelData[ghostY][ghostX] == 20 || levelData[ghostY][ghostX] == 24)
                         pacmanDead();
-                    } else if ((levelData[ghostY][ghostX] < 32 && levelData[ghostY][ghostX] != 20)
-                        || levelData[ghostY][ghostX] == 64 || levelData[ghostY][ghostX] == 128
-                        || levelData[ghostY][ghostX] == 256 || levelData[ghostY][ghostX] == 512 || levelData[ghostY][ghostX] == 1024
-                    )
-                        levelData[ghostY][ghostX] += 32;
+                    levelData[ghostY][ghostX] += 32;
                     break;
                 case 1:
-                    if ((levelData[ghostY][ghostX] > 32 && levelData[ghostY][ghostX] < 74)
-                            || levelData[ghostY][ghostX] == 64 || levelData[ghostY][ghostX] == 128
-                            || levelData[ghostY][ghostX] == 256 || levelData[ghostY][ghostX] == 512 || levelData[ghostY][ghostX] == 1024)
-                        levelData[ghostY][ghostX] -= 32;
-                    if (levelData[ghostY][ghostX] == 32)
-                        levelData[ghostY][ghostX] = 0;
+                    levelData[ghostY][ghostX] -= 32;
                     ghostY++;
-                    if (levelData[ghostY][ghostX] == 16 || levelData[ghostY][ghostX] == 18 || levelData[ghostY][ghostX] == 20 || levelData[ghostY][ghostX] == 24) {
-                        levelData[ghostY][ghostX] += 32;
+                    if (levelData[ghostY][ghostX] == 16 || levelData[ghostY][ghostX] == 18 || levelData[ghostY][ghostX] == 20 || levelData[ghostY][ghostX] == 24)
                         pacmanDead();
-                    } else if ((levelData[ghostY][ghostX] < 32 && levelData[ghostY][ghostX] != 20)
-                            || levelData[ghostY][ghostX] == 64 || levelData[ghostY][ghostX] == 128
-                            || levelData[ghostY][ghostX] == 256 || levelData[ghostY][ghostX] == 512 || levelData[ghostY][ghostX] == 1024
-                    )
-                        levelData[ghostY][ghostX] += 32;
+                    levelData[ghostY][ghostX] += 32;
                     break;
                 case 2:
-                    if ((levelData[ghostY][ghostX] > 32 && levelData[ghostY][ghostX] < 74)
-                            || levelData[ghostY][ghostX] == 64 || levelData[ghostY][ghostX] == 128
-                            || levelData[ghostY][ghostX] == 256 || levelData[ghostY][ghostX] == 512 || levelData[ghostY][ghostX] == 1024)
-                        levelData[ghostY][ghostX] -= 32;
-                    if (levelData[ghostY][ghostX] == 32)
-                        levelData[ghostY][ghostX] = 0;
+                    levelData[ghostY][ghostX] -= 32;
                     ghostX--;
-                    if (levelData[ghostY][ghostX] == 16 || levelData[ghostY][ghostX] == 18 || levelData[ghostY][ghostX] == 20 || levelData[ghostY][ghostX] == 24) {
-                        levelData[ghostY][ghostX] += 32;
+                    if (levelData[ghostY][ghostX] == 16 || levelData[ghostY][ghostX] == 18 || levelData[ghostY][ghostX] == 20 || levelData[ghostY][ghostX] == 24)
                         pacmanDead();
-                    } else if ((levelData[ghostY][ghostX] < 32 && levelData[ghostY][ghostX] != 20)
-                            || levelData[ghostY][ghostX] == 64 || levelData[ghostY][ghostX] == 128
-                            || levelData[ghostY][ghostX] == 256 || levelData[ghostY][ghostX] == 512 || levelData[ghostY][ghostX] == 1024
-                    )
-                        levelData[ghostY][ghostX] += 32;
+                    levelData[ghostY][ghostX] += 32;
                     break;
                 case 3:
-                    if ((levelData[ghostY][ghostX] > 32 && levelData[ghostY][ghostX] < 74)
-                            || levelData[ghostY][ghostX] == 64 || levelData[ghostY][ghostX] == 128
-                            || levelData[ghostY][ghostX] == 256 || levelData[ghostY][ghostX] == 512 || levelData[ghostY][ghostX] == 1024)
-                        levelData[ghostY][ghostX] -= 32;
-                    if (levelData[ghostY][ghostX] == 32)
-                        levelData[ghostY][ghostX] = 0;
+                    levelData[ghostY][ghostX] -= 32;
                     ghostX++;
-                    if (levelData[ghostY][ghostX] == 16 || levelData[ghostY][ghostX] == 18 || levelData[ghostY][ghostX] == 20 || levelData[ghostY][ghostX] == 24) {
-                        levelData[ghostY][ghostX] += 32;
+                    if (levelData[ghostY][ghostX] == 16 || levelData[ghostY][ghostX] == 18 || levelData[ghostY][ghostX] == 20 || levelData[ghostY][ghostX] == 24)
                         pacmanDead();
-                    } else if ((levelData[ghostY][ghostX] < 32 && levelData[ghostY][ghostX] != 20)
-                            || levelData[ghostY][ghostX] == 64 || levelData[ghostY][ghostX] == 128
-                            || levelData[ghostY][ghostX] == 256 || levelData[ghostY][ghostX] == 512 || levelData[ghostY][ghostX] == 1024
-                    )
-                        levelData[ghostY][ghostX] += 32;
+                    levelData[ghostY][ghostX] += 32;
                     break;
             }
         }
@@ -1119,6 +1095,9 @@ public class Game extends JFrame {
 
     public void startMovingGhosts() {
         for (int i = 0; i < ghostNum; i++) {
+            Semaphore semaphore = new Semaphore(1);
+            ghostSemaphores[i] = semaphore;
+
             Thread ghostThread = new Thread(() -> {
                 int ghostX = levelData[0].length / 2;
                 int ghostY = levelData.length / 2;
@@ -1129,17 +1108,21 @@ public class Game extends JFrame {
                         int ghostXLast = ghostX;
                         int ghostYLast = ghostY;
 
+                        semaphore.acquire();
                         int[] newGhostPosition = moveGhost(ghostX, ghostY);
                         ghostX = newGhostPosition[0];
                         ghostY = newGhostPosition[1];
+                        semaphore.release();
 
                         Thread.sleep(ghostSpeed);
 
                         long currentTime = System.currentTimeMillis();
                         if (currentTime - lastActionTime >= 5000 && Math.random() < 0.25) {
+                            semaphore.acquire();
                             if (levelData[ghostY][ghostX] != 4 || levelData[ghostY][ghostX] != 8)
                                 doRandomAction(ghostXLast, ghostYLast);
                             lastActionTime = currentTime;
+                            semaphore.release();
                         }
 
                     } catch (InterruptedException e) {
@@ -1152,6 +1135,7 @@ public class Game extends JFrame {
         }
     }
 
+
     public void doRandomAction(int ghostX, int ghostY) {
         Random random = new Random();
         switch (random.nextInt(5)) {
@@ -1163,6 +1147,7 @@ public class Game extends JFrame {
         }
         table.revalidate();
         table.repaint();
+        System.out.println(levelData[ghostY][ghostX]);
     }
 
     public void stopMovingGhosts() {
@@ -1171,6 +1156,7 @@ public class Game extends JFrame {
                 semaphore.acquire();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                System.out.println("Stop moving ghost not working: " + e);
             }
         }
     }
@@ -1212,7 +1198,7 @@ public class Game extends JFrame {
         Thread pointAnim = new Thread(() -> {
             while (true) {
                 try {
-                    Thread.sleep(1000/5);
+                    Thread.sleep(1000);
                     updatePointAnimationState();
                     SwingUtilities.invokeLater(() -> {
                         table.repaint();
