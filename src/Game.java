@@ -9,6 +9,10 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
+/***
+ * Game class is responsible for the game logic and the game window.
+ */
+
 public class Game extends JFrame {
 
     private final int MAX_GHOSTS = 10, MAX_LIFES = 5;
@@ -58,6 +62,11 @@ public class Game extends JFrame {
     private ImageIcon life, scaledLife, point, point1;
     private ImageIcon bonus, heart, multiplier, freeze, slowdown;
 
+    /***
+     * Constructor of the Game class.
+     * @param mapHeight
+     * @param mapWidth
+     */
     public Game(int mapHeight, int mapWidth) {
         //window settings
         setTitle("Pac-Man");
@@ -177,6 +186,9 @@ public class Game extends JFrame {
         refreshTable();
     }
 
+    /***
+     * Method that double the point's player gets from eating points for 3 seconds.
+     */
     public void doublePoints() {
         pointsMultiplier = 2;
 
@@ -187,10 +199,16 @@ public class Game extends JFrame {
         }
     }
 
+    /***
+     * Method that adds bonus points to the player's score.
+     */
     public void bonusPoints() {
         score += bonusPoints;
     }
 
+    /***
+     * Method that adds bonus life.
+     */
     public void bonusLife() {
         if (lifes < MAX_LIFES) {
             lifes++;
@@ -198,6 +216,9 @@ public class Game extends JFrame {
         }
     }
 
+    /***
+     * Method that freeze ghost for 2 seconds.
+     */
     public void freezeGhosts() {
         stopMovingGhosts();
 
@@ -208,6 +229,9 @@ public class Game extends JFrame {
         }
     }
 
+    /***
+     * Method that slow down ghosts for 2 seconds.
+     */
     public void slowDownGhosts() {
         ghostSpeed = 400;
 
@@ -218,6 +242,9 @@ public class Game extends JFrame {
         }
     }
 
+    /***
+     * Method that speed up pacman for 5 seconds.
+     */
     public void speedUpPacman() {
         pacmanSpeed = 200;
 
@@ -228,6 +255,9 @@ public class Game extends JFrame {
         }
     }
 
+    /***
+     * Method that returns the player to the menu.
+     */
     private void returnToMenu() {
         dispose();
         SwingUtilities.invokeLater(
@@ -237,6 +267,9 @@ public class Game extends JFrame {
         );
     }
 
+    /***
+     * Method that loads all the images.
+     */
     private void loadImages() {
         //misc
         point = new ImageIcon("assets\\images\\point\\point.png");
@@ -280,6 +313,9 @@ public class Game extends JFrame {
         freeze = new ImageIcon("assets\\images\\perks\\freeze.png");
     }
 
+    /***
+     * Method that refresh the map.
+     */
     public void refreshTable() {
         for (int j = 0; j < table.getColumnCount(); j++) {
             TableColumn tableColumn = table.getColumnModel().getColumn(j);
@@ -288,6 +324,10 @@ public class Game extends JFrame {
         }
     }
 
+    /***
+     * Method that check if the player has won the level.
+     * @return
+     */
     public boolean checkLevel() {
         int rowCount = table.getRowCount();
         int colCount = table.getColumnCount();
@@ -303,6 +343,9 @@ public class Game extends JFrame {
         return true;
     }
 
+    /***
+     * Method that load next level.
+     */
     public void nextLevel() {
         System.out.println("Next Level " + ++level);
         System.out.println("Score: " + score);
@@ -345,12 +388,18 @@ public class Game extends JFrame {
         table.repaint();
     }
 
+    /***
+     * Method that update map depending on the number of ghosts.
+     */
     private void ghostsUpdate() {
         for (int i = 0; i < ghostNum; i++) {
             this.levelData[levelData.length / 2][levelData[0].length / 2] += 32;
         }
     }
 
+    /***
+     * Method that load the number of life's into the panel.
+     */
     private void loadLifes() {
         livesPanel.removeAll();
         for (int i = 0; i < lifes; i++) {
@@ -362,6 +411,10 @@ public class Game extends JFrame {
         livesPanel.revalidate();
     }
 
+    /***
+     * Method that start the timer.
+     * @param timerLabel
+     */
     private void startTimer(JLabel timerLabel) {
         Thread timerThread = new Thread(() -> {
             int time = 0;
@@ -383,6 +436,10 @@ public class Game extends JFrame {
         timerThread.start();
     }
 
+    /**
+     * Method that pre-generate map (only walls).
+     * @return
+     */
     private int[][] preGenMap(){
         int[][] preGenMap = new int[mapHeight][mapWidth];
         for (int i = 0; i < preGenMap.length; i++) {
@@ -393,6 +450,11 @@ public class Game extends JFrame {
         return preGenMap;
     }
 
+    /***
+     * Method that generate map with walls and points.
+     * @param mapArr
+     * @return
+     */
     public int[][] genMap(int[][] mapArr) {
         Random random = new Random();
 
@@ -405,6 +467,12 @@ public class Game extends JFrame {
         return mapArr;
     }
 
+    /***
+     * Method that generate map recursively.
+     * @param mapArr
+     * @param x
+     * @param y
+     */
     private void generateMazeRecursive(int[][] mapArr, int x, int y) {
         mapArr[y][x] = 2;
 
@@ -430,6 +498,10 @@ public class Game extends JFrame {
         }
     }
 
+    /***
+     * Method necessary for generateMazeRecursive method.
+     * @param array
+     */
     private void shuffleArray(int[] array) {
         Random random = new Random();
         for (int i = array.length - 1; i > 0; i--) {
@@ -440,6 +512,10 @@ public class Game extends JFrame {
         }
     }
 
+    /***
+     * Method that generate grid of points and ghost resp.
+     * @param mapArr
+     */
     private void myMazeGrid(int[][] mapArr) {
         for (int i = 0; i < mapArr.length; i++) {
             for (int j = 0; j < mapArr[0].length; j++) {
@@ -452,6 +528,10 @@ public class Game extends JFrame {
         }
     }
 
+    /***
+     * Method that randomly generate pacman resp.
+     * @param mapArr
+     */
     private void randomPacmanResp(int[][] mapArr) {
         Random rand = new Random();
         boolean random = rand.nextBoolean();
@@ -469,6 +549,9 @@ public class Game extends JFrame {
         pacmanYBackUp = pacmanY;
     }
 
+    /***
+     * Method that load number of ghosts depending on map size.
+     */
     private void loadGhosts() {
         if (mapHeight * mapWidth < 15 * 15) {
             this.ghostNum = 2;
@@ -489,6 +572,9 @@ public class Game extends JFrame {
         System.out.println("(loadGhost()) Ghost num " + ghostNum);
     }
 
+    /***
+     * Method that respawn pacman.
+     */
     public void pacmanDead() {
         lifes--;
         loadLifes();
@@ -512,6 +598,9 @@ public class Game extends JFrame {
         return score;
     }
 
+    /***
+     * MapTableModel class.
+     */
     private class MapTableModel extends AbstractTableModel {
         private final int[][] data;
 
@@ -551,6 +640,9 @@ public class Game extends JFrame {
         }
     }
 
+    /***
+     * MapTableCellRenderer class.
+     */
     private class MapTableCellRenderer extends DefaultTableCellRenderer {
 
         //misc
@@ -749,10 +841,17 @@ public class Game extends JFrame {
     }
 
     private int pacmanAnimationState = 0;
+
+    /***
+     * Updates the pacman animation state.
+     */
     private void updatePacmanAnimationState() {
         pacmanAnimationState = (pacmanAnimationState + 1) % 4;
     }
 
+    /***
+     * Updates the pacman animation.
+     */
     private void updatePacmanAnimation() {
         Thread pacmanAnim = new Thread(() -> {
             while (true) {
