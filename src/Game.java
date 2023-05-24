@@ -1218,7 +1218,7 @@ public class Game extends JFrame {
                         long currentTime = System.currentTimeMillis();
                         if (currentTime - lastActionTime >= 5000 && Math.random() < 0.25) {
                             semaphore.acquire();
-                            if (levelData[ghostY][ghostX] != 4 || levelData[ghostY][ghostX] != 8)
+                            if (levelData[ghostYLast][ghostXLast] != 4 || levelData[ghostYLast][ghostXLast] != 8)
                                 doRandomAction(ghostXLast, ghostYLast);
                             lastActionTime = currentTime;
                             semaphore.release();
